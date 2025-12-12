@@ -1,0 +1,5 @@
+{
+  "name": "JewelryGenius - AI Detail Page Generator",
+  "description": "Generates professional 790x8000px e-commerce detail pages for jewelry based on product images and style prompts using Gemini models.",
+  "requestFramePermissions": []
+}
