@@ -3,6 +3,7 @@ export interface ProductInfo {
   stylePrompt: string;
   imageBase64: string;
   imageMimeType: string;
+  inspirationStyle?: 'manga' | 'paperCut' | 'traditional'; // 添加inspirationStyle字段
 }
 
 export interface GeneratedAssets {

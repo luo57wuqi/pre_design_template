@@ -47,10 +47,25 @@ async function generateCopyWithDoubao(apiKey: string, title: string): Promise<{ 
         content: [
           {
             type: "input_text",
-            text: `为珠宝产品"${title}"生成营销文案。
-            输出严格的JSON格式，包含:
-            1. "subtitle": 精确8个中文字符的产品优雅总结。
-            2. "inspirationText": 包含4个字符串的数组。每个字符串必须是中文，富有诗意，描述设计灵感，每句不超过15个字符。`
+            text: `为珠宝产品"${title}"生成营销文案。严格按照以下JSON格式输出，不要添加任何额外解释或文本：
+
+{
+  "subtitle": "[这里填入恰好8个中文字符的产品优雅总结]",
+  "inspirationText": [
+    "[第一句富有诗意的灵感文案，不超过15个字符]",
+    "[第二句富有诗意的灵感文案，不超过15个字符]",
+    "[第三句富有诗意的灵感文案，不超过15个字符]",
+    "[第四句富有诗意的灵感文案，不超过15个字符]"
+  ]
+}
+
+重要规则：
+1. subtitle字段必须恰好是8个中文字符
+2. inspirationText数组必须包含4个字符串元素
+3. 每个灵感文案字符串不得超过15个字符
+4. 所有内容必须是中文
+5. 不要包含任何Markdown标记或额外说明
+6. 直接输出JSON，不要添加任何前缀或后缀`
           }
         ]
       }
@@ -75,17 +90,46 @@ async function generateCopyWithDoubao(apiKey: string, title: string): Promise<{ 
   const content = data.choices?.[0]?.message?.content || '{}';
   
   try {
-    // 如果返回的是带markdown代码块的JSON，则去除代码块标记
+    // 如果返回的是带代码块的JSON，则去除代码块标记
     let jsonString = content.trim();
     if (jsonString.startsWith('```json')) {
       jsonString = jsonString.substring(7, jsonString.length - 3);
     } else if (jsonString.startsWith('```')) {
       jsonString = jsonString.substring(3, jsonString.length - 3);
     }
-    return JSON.parse(jsonString);
+    
+    // 确保我们只解析纯JSON
+    const parsed = JSON.parse(jsonString);
+    
+    // 验证并确保格式正确
+    if (!parsed.subtitle || typeof parsed.subtitle !== 'string') {
+      throw new Error('缺少或无效的subtitle字段');
+    }
+    
+    if (!Array.isArray(parsed.inspirationText) || parsed.inspirationText.length !== 4) {
+      throw new Error('inspirationText必须是包含4个元素的数组');
+    }
+    
+    // 验证每个灵感文案长度
+    for (let i = 0; i < parsed.inspirationText.length; i++) {
+      if (typeof parsed.inspirationText[i] !== 'string') {
+        throw new Error(`inspirationText[${i}]必须是字符串`);
+      }
+    }
+    
+    return parsed;
   } catch (e) {
     console.error('解析JSON失败:', content);
-    throw new Error("文本生成格式错误");
+    // 返回默认值以防解析失败
+    return {
+      subtitle: '璀璨臻品至美之选',
+      inspirationText: [
+        '匠心独运耀目光华',
+        '典雅设计传世之美',
+        '璀璨宝石恒久闪耀',
+        '珍贵材质雕琢非凡'
+      ]
+    };
   }
 }
 
@@ -138,6 +182,27 @@ async function generateImageWithDoubao(
   return base64ImageData;
 }
 
+// 根据风格选择生成对应的提示词
+function getInspirationPrompt(product: ProductInfo): string {
+  switch (product.inspirationStyle) {
+    case 'manga':
+      return `基于"${product.title}"珠宝的设计元素，创建一幅漫画风格插图。
+              采用行星海城动漫的视觉美学，日系动漫风格，梦幻色彩，精致线条艺术，
+              将珠宝元素融入富有想象力的场景中，艺术插画风格，高分辨率细节，
+              ${product.stylePrompt}，聚焦关键设计元素，富有创意和艺术感。`;
+    
+    case 'paperCut':
+      return `基于"${product.title}"珠宝的设计元素，创建一幅中国传统剪纸艺术风格插图。
+              红色调为主，精细的剪纸镂空纹理，将珠宝形状转化为剪纸图案，
+              融入中国传统纹样元素（如云纹、回纹、花卉等），
+              平面化构图，对称美学，节日装饰艺术风格，
+              ${product.stylePrompt}，体现传统文化与现代设计的结合。`;
+              
+    default: // traditional style
+      return `佩戴珠宝的时尚模特，${product.stylePrompt}风格，聚焦面部和珠宝，艺术感，高雅时尚，背景简洁。`;
+  }
+}
+
 // 主函数：生成珠宝资产
 export const generateJewelryAssets = async (
   product: ProductInfo,
@@ -169,7 +234,7 @@ export const generateJewelryAssets = async (
     // 4. 生成灵感模特图（第二部分）
     onProgress("正在生成灵感模特图...", 45);
     const modelInspirationImage = await generateImageWithDoubao(apiKey, product,
-      `佩戴珠宝的时尚模特，${product.stylePrompt}风格，聚焦面部和珠宝，艺术感，高雅时尚，背景简洁。`
+      getInspirationPrompt(product)
     );
 
     // 5. 生成广角场景图（第三部分）

@@ -11,6 +11,7 @@ interface InputSectionProps {
 const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isGenerating }) => {
   const [title, setTitle] = useState('');
   const [stylePrompt, setStylePrompt] = useState('极简现代, 高级灰调, 优雅');
+  const [inspirationStyle, setInspirationStyle] = useState<'traditional' | 'manga' | 'paperCut'>('traditional');
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
@@ -34,7 +35,8 @@ const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isGenerating })
         title,
         stylePrompt,
         imageBase64: base64Raw,
-        imageMimeType: file.type
+        imageMimeType: file.type,
+        inspirationStyle
       });
     }
   };
@@ -89,6 +91,46 @@ const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isGenerating })
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition h-24 resize-none"
             required
           />
+        </div>
+
+        {/* Inspiration Style */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">设计灵感图风格</label>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setInspirationStyle('traditional')}
+              className={`py-2 px-3 rounded-lg border transition-colors ${
+                inspirationStyle === 'traditional'
+                  ? 'bg-red-50 border-red-500 text-red-700'
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              传统模特
+            </button>
+            <button
+              type="button"
+              onClick={() => setInspirationStyle('manga')}
+              className={`py-2 px-3 rounded-lg border transition-colors ${
+                inspirationStyle === 'manga'
+                  ? 'bg-red-50 border-red-500 text-red-700'
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              漫画风格
+            </button>
+            <button
+              type="button"
+              onClick={() => setInspirationStyle('paperCut')}
+              className={`py-2 px-3 rounded-lg border transition-colors ${
+                inspirationStyle === 'paperCut'
+                  ? 'bg-red-50 border-red-500 text-red-700'
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              剪纸艺术
+            </button>
+          </div>
         </div>
 
         <button
