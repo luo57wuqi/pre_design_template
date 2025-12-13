@@ -3,8 +3,9 @@ import InputSection from './components/InputSection';
 import DetailCanvas from './components/DetailCanvas';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ProductInfo, GeneratedAssets, GenerationStatus } from './types';
-import { generateJewelryAssets } from './services/doubaoService';
-import { Download, AlertCircle, Key } from 'lucide-react';
+import { generateJewelryAssets as generateJewelryAssetsDoubao } from './services/doubaoService';
+import { generateJewelryAssets as generateJewelryAssetsGemini } from './services/geminiService';
+import { Download, AlertCircle, Key, Server } from 'lucide-react';
 
 const App: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -14,6 +15,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [apiKey, setApiKey] = useState('');
+  const [apiService, setApiService] = useState<'doubao' | 'gemini'>('doubao'); // 添加API服务选择状态
 
   const handleGenerate = async (info: ProductInfo) => {
     setProduct(info);
@@ -27,19 +29,33 @@ const App: React.FC = () => {
         ...((window as any).process || {}),
         env: {
           ...((window as any).process?.env || {}),
-          ARK_API_KEY: apiKey
+          ...(apiService === 'doubao' 
+            ? { ARK_API_KEY: apiKey, VITE_ARK_API_KEY: apiKey } 
+            : { API_KEY: apiKey, GEMINI_API_KEY: apiKey })
         }
       };
     }
 
     try {
-      const result = await generateJewelryAssets(info, (step, progress) => {
+      // 根据选择的API服务调用相应的生成函数
+      const generateFunction = apiService === 'doubao' 
+        ? generateJewelryAssetsDoubao 
+        : generateJewelryAssetsGemini;
+        
+      const result = await generateFunction(info, (step, progress) => {
         setStatus({ isGenerating: true, step, progress });
       });
       setAssets(result);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "生成失败，请检查API Key或重试。");
+      let errorMessage = err.message || `${apiService === 'doubao' ? '豆包' : 'Gemini'} API生成失败，请检查API Key或重试。`;
+      
+      // 如果是Gemini API的配额限制错误，提供更具体的提示
+      if (apiService === 'gemini' && err.status === 429) {
+        errorMessage = 'Gemini API配额限制已达到，系统将在1分钟后自动重试。如果问题持续存在，请考虑切换到豆包API或升级您的Gemini API套餐。';
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsGenerating(false);
       setStatus({ isGenerating: false, step: '', progress: 0 });
@@ -53,7 +69,9 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-2xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">JewelryGenius</span>
-            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-500 rounded">豆包版</span>
+            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-500 rounded">
+              {apiService === 'doubao' ? '豆包版' : 'Gemini版'}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <button 
@@ -63,6 +81,16 @@ const App: React.FC = () => {
               <Key className="w-4 h-4" />
               API Key
             </button>
+            
+            {/* API Service Toggle */}
+            <button 
+              onClick={() => setApiService(apiService === 'doubao' ? 'gemini' : 'doubao')}
+              className="flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition text-sm"
+            >
+              <Server className="w-4 h-4" />
+              切换到{apiService === 'doubao' ? 'Gemini' : '豆包'}
+            </button>
+            
             {assets && (
               <button 
                 onClick={() => window.print()}
@@ -95,7 +123,11 @@ const App: React.FC = () => {
         )}
 
         {/* Input Area */}
-        <InputSection onGenerate={handleGenerate} isGenerating={isGenerating} />
+        <InputSection 
+          onGenerate={handleGenerate} 
+          isGenerating={isGenerating} 
+          apiService={apiService} // 传递API服务信息
+        />
 
         {/* Error Display */}
         {error && (

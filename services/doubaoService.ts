@@ -228,40 +228,47 @@ export const generateJewelryAssets = async (
     // 3. 生成主图（第一部分）
     onProgress("正在生成主场景图...", 30);
     const heroImage = await generateImageWithDoubao(apiKey, product,
-      `珠宝产品摄影，${product.title}，${product.stylePrompt}，构图简洁，最多3个背景元素，产品占画面40%，专业灯光,3:4。`
+      `珠宝产品摄影，${product.title}，${product.stylePrompt}，构图简洁，最多3个背景元素，产品占画面40%，专业灯光,3:4。
+      严格保持产品的原始材质、颜色、光泽、结构和形状不变，只能改变背景和光影效果。`
     );
 
     // 4. 生成灵感模特图（第二部分）
     onProgress("正在生成灵感模特图...", 45);
     const modelInspirationImage = await generateImageWithDoubao(apiKey, product,
-      getInspirationPrompt(product)
+      `${getInspirationPrompt(product)}
+      严格保持产品的原始材质、颜色、光泽、结构和形状不变，只能改变背景、模特和整体构图。`
     );
 
     // 5. 生成广角场景图（第三部分）
     onProgress("正在生成广角场景图...", 55);
     const sceneWideImage = await generateImageWithDoubao(apiKey, product,
-      `珠宝的广角产品拍摄，${product.stylePrompt}，极简场景，45度侧光，强阴影，3D渲染风格，产品占画面70%。`
+      `珠宝的广角产品拍摄，${product.stylePrompt}，极简场景，45度侧光，强阴影，3D渲染风格，产品占画面70%。
+      严格保持产品的原始材质、颜色、光泽、结构和形状不变，只能改变背景、光影和视角。`
     );
 
     // 6. 生成佩戴展示图（第四部分）
     onProgress("正在生成佩戴展示图...", 70);
     const modelWearImage = await generateImageWithDoubao(apiKey, product,
-      `模特佩戴珠宝，聚焦身体部位（颈部/手部/耳部），取决于物品类型，${product.stylePrompt}，肌肤质感干净，逼真优雅，产品占画面70%。`
+      `模特佩戴珠宝，聚焦身体部位（颈部/手部/耳部），取决于物品类型，${product.stylePrompt}，肌肤质感干净，逼真优雅，产品占画面70%。
+      严格保持产品的原始材质、颜色、光泽、结构和形状不变，只能改变模特、背景和整体构图。`
     );
 
     // 7. 生成细节图（第五部分）
     onProgress("正在生成细节图...", 80);
     const [detailImage1, detailImage2] = await Promise.all([
       generateImageWithDoubao(apiKey, product, 
-        `珠宝细节的极限微距拍摄，${product.stylePrompt}，闪闪发光，高质量纹理。不能改变产品的材质和光泽和结构和形状`),
+        `珠宝细节的极限微距拍摄，${product.stylePrompt}，闪闪发光，高质量纹理。
+        严格保持产品的原始材质、颜色、光泽、结构和形状不变，只能改变焦距、光影和拍摄角度。`),
       generateImageWithDoubao(apiKey, product, 
-        `珠宝的艺术角度，${product.stylePrompt}，背景虚化，突出工艺品质。`)
+        `珠宝的艺术角度，${product.stylePrompt}，背景虚化，突出工艺品质。
+        严格保持产品的原始材质、颜色、光泽、结构和形状不变，只能改变背景、光影和拍摄角度。`)
     ]);
 
     // 8. 生成多角度展示图（第六部分）
     onProgress("正在生成多角度展示...", 90);
     const multiAngleImage = await generateImageWithDoubao(apiKey, product,
-      `珠宝产品的拼贴风格或悬浮构图，${product.stylePrompt}，轻微阴影，白色或浅色中性背景。`
+      `珠宝产品的拼贴风格或悬浮构图，${product.stylePrompt}，轻微阴影，白色或浅色中性背景。
+      严格保持产品的原始材质、颜色、光泽、结构和形状不变，只能改变构图、背景和光影效果。`
     );
 
     onProgress("组装完成", 100);

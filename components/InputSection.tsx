@@ -6,9 +6,10 @@ import { blobToBase64 } from '../services/doubaoService';
 interface InputSectionProps {
   onGenerate: (data: ProductInfo) => void;
   isGenerating: boolean;
+  apiService?: 'doubao' | 'gemini'; // 添加API服务属性
 }
 
-const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isGenerating }) => {
+const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isGenerating, apiService = 'doubao' }) => {
   const [title, setTitle] = useState('');
   const [stylePrompt, setStylePrompt] = useState('极简现代, 高级灰调, 优雅');
   const [inspirationStyle, setInspirationStyle] = useState<'traditional' | 'manga' | 'paperCut'>('traditional');
@@ -45,7 +46,7 @@ const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isGenerating })
     <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 mb-8 max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
         <Sparkles className="w-6 h-6 text-red-500" />
-        AI 详情页生成器 (豆包版)
+        AI 详情页生成器
       </h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
